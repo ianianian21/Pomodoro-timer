@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="30dp"
+    android:gravity="center"
+    android:background="@drawable/bg_bottom_sheet"
+    android:elevation="8dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/settings"
+        android:textSize="18sp"
+        android:textColor="@color/text_primary"
+        android:paddingBottom="8dp"
+        android:gravity="center" />
+
+    <LinearLayout
+        android:layout_width="365dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="42dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="@string/label_work"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp" />
+
+        <EditText
+            android:id="@+id/bs_input_work"
+            android:layout_width="84dp"
+            android:layout_height="64dp"
+            android:layout_marginStart="8dp"
+            android:autofillHints="postalAddressLocality"
+            android:backgroundTint="@color/primary"
+            android:gravity="center"
+            android:hint="@string/hint_work_minutes"
+            android:inputType="number"
+            android:text="@string/default_work_minutes"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint"
+            android:textSize="16sp" />
+
+        <TextView
+            android:layout_width="45dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="8dp"
+            android:text="@string/label_break"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp" />
+
+        <EditText
+            android:id="@+id/bs_input_break"
+            android:layout_width="84dp"
+            android:layout_height="64dp"
+            android:layout_marginStart="8dp"
+            android:autofillHints="postalAddressLocality"
+            android:backgroundTint="@color/primary"
+            android:gravity="center"
+            android:hint="@string/hint_break_minutes"
+            android:inputType="number"
+            android:text="@string/default_break_minutes"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint"
+            android:textSize="16sp" />
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/bs_apply"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:padding="12dp"
+        android:minWidth="120dp"
+        android:backgroundTint="@color/surface_variant"
+        android:text="@string/apply"
+        android:textColor="@color/text_primary" />
+
+</LinearLayout>

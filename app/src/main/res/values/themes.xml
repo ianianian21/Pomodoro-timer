@@ -1,0 +1,60 @@
+<resources>
+    <!-- Base application theme. -->
+    <style name="Base.Theme.PomodoroTimer" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary_variant</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="android:buttonStyle">@style/Pomodoro.Button</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="bottomSheetDialogTheme">@style/Pomodoro.BottomSheetDialog</item>
+    </style>
+
+    <style name="Theme.PomodoroTimer" parent="Base.Theme.PomodoroTimer" />
+
+    <!-- Text appearances -->
+    <style name="Pomodoro.TimerText" parent="TextAppearance.AppCompat.Display1">
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">72sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="Pomodoro.ModeText" parent="TextAppearance.AppCompat.Medium">
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <!-- Button style -->
+    <style name="Pomodoro.Button" parent="Widget.AppCompat.Button.Colored">
+        <item name="android:backgroundTint">@color/primary</item>
+        <item name="android:textColor">@color/on_primary</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
+    <!-- Card appearance -->
+    <style name="Pomodoro.Card" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">@color/surface_variant</item>
+        <item name="cardCornerRadius">12dp</item>
+    </style>
+
+    <!-- Backwards-compatible fallback style in case a resource references @style/Pomodoro -->
+    <style name="Pomodoro" parent="Theme.Material3.DayNight.NoActionBar" />
+
+
+    <!-- Bottom sheet dialog style used by the app theme -->
+    <style name="Pomodoro.BottomSheetDialog" parent="Theme.MaterialComponents.Light.BottomSheetDialog">
+        <!-- Keep a subtle animation and ensure the bottom sheet matches app surface color -->
+        <item name="android:windowAnimationStyle">@style/Pomodoro.DialogAnimation</item>
+        <item name="bottomSheetStyle">@style/Widget.MaterialComponents.BottomSheet.Modal</item>
+        <item name="materialCardViewStyle">@style/Pomodoro.Card</item>
+    </style>
+
+    <style name="Pomodoro.DialogAnimation">
+        <item name="android:windowEnterAnimation">@anim/slide_up_fade_in</item>
+        <item name="android:windowExitAnimation">@anim/slide_up_fade_in</item>
+    </style>
+</resources>

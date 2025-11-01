@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Slightly lighter dark background tones (not too dark) -->
+    <color name="background">#16121F</color>
+    <color name="surface">#1E1729</color>
+    <color name="surface_variant">#2A2136</color>
+
+    <!-- Sheet background: slightly brighter violet than surface_variant -->
+    <color name="sheet_background">#3A2B57</color>
+
+    <!-- Violet primary colors -->
+    <color name="primary">#7C4DFF</color>
+    <color name="primary_variant">#5E35B1</color>
+    <color name="on_primary">#FFFFFFFF</color>
+
+    <!-- Accent / subtle violet -->
+    <color name="accent">#9C88FF</color>
+
+    <!-- Text colors (adjusted for lighter dark background) -->
+    <color name="text_primary">#F3F1FA</color>
+    <color name="text_secondary">#CFC6F5</color>
+    <color name="text_hint">#BEB3EB</color>
+
+    <!-- Misc -->
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+</resources>

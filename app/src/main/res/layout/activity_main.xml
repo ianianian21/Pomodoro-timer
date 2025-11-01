@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    tools:context=".MainActivity">
+
+    <!-- Mode label (Work / Break) -->
+    <TextView
+        android:id="@+id/text_mode"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        style="@style/Pomodoro.ModeText"
+        android:text="@string/mode_work"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="24dp" />
+
+    <!-- Sessions counter -->
+    <TextView
+        android:id="@+id/text_sessions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/sessions_label"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@id/text_mode"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="8dp" />
+
+    <!-- Timer with circular progress (centered) -->
+    <FrameLayout
+        android:id="@+id/timer_frame"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@id/button_row"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/text_sessions"
+        app:layout_constraintVertical_bias="0.18">
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/circular_progress"
+            android:layout_width="260dp"
+            android:layout_height="260dp"
+            android:layout_gravity="center"
+            android:indeterminate="false"
+            app:indicatorColor="@color/primary"
+            app:indicatorInset="0dp"
+            app:indicatorSize="260dp"
+            app:trackColor="@color/surface_variant"
+            app:trackThickness="8dp" />
+
+        <TextView
+            android:id="@+id/text_timer"
+            style="@style/Pomodoro.TimerText"
+            android:layout_width="match_parent"
+            android:layout_height="244dp"
+            android:gravity="center"
+            android:padding="24dp"
+            android:text="@string/default_timer" />
+
+    </FrameLayout>
+
+    <!-- Centered row for Play/Pause buttons -->
+    <LinearLayout
+        android:id="@+id/button_row"
+        style="?android:attr/buttonBarStyle"
+        android:layout_width="286dp"
+        android:layout_height="124dp"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/timer_frame">
+
+        <ImageButton
+            android:id="@+id/button_play"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_marginEnd="16dp"
+            android:backgroundTint="@color/primary"
+            android:contentDescription="@string/start"
+            android:src="@drawable/ic_play"
+            app:tint="@color/on_primary" />
+
+        <ImageButton
+            android:id="@+id/button_pause"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_marginStart="16dp"
+            android:backgroundTint="@color/surface"
+            android:contentDescription="@string/stop"
+            android:src="@drawable/ic_pause"
+            app:tint="@color/text_primary" />
+
+    </LinearLayout>
+
+    <!-- Centered Settings FAB (opens bottom sheet) -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/button_settings"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_settings"
+        android:contentDescription="@string/settings"
+        app:backgroundTint="@color/primary"
+        app:tint="@color/on_primary"
+        app:layout_constraintTop_toBottomOf="@id/button_row"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="24dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
