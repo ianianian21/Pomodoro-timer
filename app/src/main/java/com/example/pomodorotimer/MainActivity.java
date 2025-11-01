@@ -1,15 +1,20 @@
 package com.example.pomodorotimer;
 
 import android.animation.ObjectAnimator;
+import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.media.MediaPlayer;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Vibrator;
 import android.widget.Button;
 import android.widget.EditText;
@@ -38,12 +43,26 @@ public class MainActivity extends AppCompatActivity {
     private TextView textSessions; // new sessions counter
     private ImageButton buttonPlay;
     private ImageButton buttonPause;
+    private ImageButton buttonBack;
     private FloatingActionButton buttonSettings;
     private CircularProgressIndicator circularProgress;
+
+    // MediaPlayer used for custom audio notifications (user-provided files in res/raw)
+    private MediaPlayer mediaPlayer;
+
+    // Handler for delayed playback and pending runnable reference so it can be cancelled
+    private Handler mainHandler = new Handler(Looper.getMainLooper());
+    private Runnable pendingSoundRunnable;
 
     private CountDownTimer countDownTimer;
     private boolean isRunning = false;
     private boolean isWorkMode = true;
+
+    // Flag to make sure we play the break-preend sound only once per break session
+    private boolean breakPreEndPlayed = false;
+
+    // Flag indicating we already pre-played the break-start sound during the last work session
+    private boolean breakStartPrePlayed = false;
 
     private long workMillis = 25 * 60 * 1000L;
     private long breakMillis = 5 * 60 * 1000L;
@@ -74,6 +93,11 @@ public class MainActivity extends AppCompatActivity {
         createNotificationChannel();
         loadPreferences();
 
+        // Back button handler
+        if (buttonBack != null) {
+            buttonBack.setOnClickListener(v -> confirmExit());
+        }
+
         if (savedInstanceState != null) {
             isWorkMode = savedInstanceState.getBoolean(KEY_IS_WORK, true);
             timeLeft = savedInstanceState.getLong(KEY_TIME_LEFT, isWorkMode ? workMillis : breakMillis);
@@ -92,12 +116,33 @@ public class MainActivity extends AppCompatActivity {
         if (isRunning) startTimer();
     }
 
+    private void confirmExit() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.confirm_exit_title)
+                .setMessage(R.string.confirm_exit_message)
+                .setPositiveButton(R.string.yes, (dialog, which) -> {
+                    // Reset sessions to 1 and persist
+                    sessionsCompleted = 1;
+                    savePreferences();
+                    finish();
+                })
+                .setNegativeButton(R.string.no, (dialog, which) -> dialog.dismiss())
+                .show();
+    }
+
+    @Override
+    public void onBackPressed() {
+        // Show confirmation dialog before exiting
+        confirmExit();
+    }
+
     private void bindViews() {
         textMode = findViewById(R.id.text_mode);
         textTimer = findViewById(R.id.text_timer);
         textSessions = findViewById(R.id.text_sessions);
         buttonPlay = findViewById(R.id.button_play);
         buttonPause = findViewById(R.id.button_pause);
+        buttonBack = findViewById(R.id.button_back);
         buttonSettings = findViewById(R.id.button_settings);
         circularProgress = findViewById(R.id.circular_progress);
     }
@@ -111,6 +156,65 @@ public class MainActivity extends AppCompatActivity {
             channel.setDescription(description);
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             if (notificationManager != null) notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    // Play a short custom audio placed in res/raw by logical name.
+    // Expected raw resource names (you should add these files):
+    //   res/raw/work_start.mp3   -> "work_start"
+    //   res/raw/work_end.mp3     -> "work_end"  (no longer used)
+    //   res/raw/break_start.mp3  -> "break_start"
+    //   res/raw/break_end.mp3    -> "break_end"
+    // If the requested file is not present, falls back to the default notification sound.
+    private void playEventSound(String rawName) {
+        try {
+            stopAndReleaseMediaPlayer();
+            int resId = getResources().getIdentifier(rawName, "raw", getPackageName());
+            if (resId != 0) {
+                mediaPlayer = MediaPlayer.create(this, resId);
+                if (mediaPlayer != null) {
+                    mediaPlayer.setOnCompletionListener(mp -> stopAndReleaseMediaPlayer());
+                    mediaPlayer.start();
+                    return;
+                }
+            }
+
+            // Fallback: play default notification ringtone
+            Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            Ringtone r = RingtoneManager.getRingtone(this, soundUri);
+            if (r != null) r.play();
+        } catch (Exception e) {
+            android.util.Log.w("MainActivity", "playEventSound error", e);
+        }
+    }
+
+    // Play an event sound after a specified delay (milliseconds). Cancels any previously scheduled sound.
+    private void playEventSoundDelayed(String rawName, long delayMs) {
+        try {
+            if (mainHandler == null) mainHandler = new Handler(Looper.getMainLooper());
+            // Cancel previous pending sound if any
+            if (pendingSoundRunnable != null) {
+                mainHandler.removeCallbacks(pendingSoundRunnable);
+                pendingSoundRunnable = null;
+            }
+            pendingSoundRunnable = () -> playEventSound(rawName);
+            mainHandler.postDelayed(pendingSoundRunnable, delayMs);
+        } catch (Exception e) {
+            android.util.Log.w("MainActivity", "playEventSoundDelayed error", e);
+        }
+    }
+
+    private void stopAndReleaseMediaPlayer() {
+        try {
+            if (mediaPlayer != null) {
+                if (mediaPlayer.isPlaying()) mediaPlayer.stop();
+                mediaPlayer.reset();
+                mediaPlayer.release();
+                mediaPlayer = null;
+            }
+        } catch (Exception e) {
+            android.util.Log.w("MainActivity", "stopAndReleaseMediaPlayer error", e);
+            mediaPlayer = null;
         }
     }
 
@@ -214,7 +318,7 @@ public class MainActivity extends AppCompatActivity {
         isWorkMode = prefs.getBoolean(KEY_IS_WORK, true);
         workMillis = workMin * 60 * 1000L;
         breakMillis = breakMin * 60 * 1000L;
-        sessionsCompleted = prefs.getInt(KEY_SESSIONS, 0);
+        sessionsCompleted = prefs.getInt(KEY_SESSIONS, 1); // default to 1
         if (textSessions != null) textSessions.setText(getString(R.string.sessions_label, sessionsCompleted));
     }
 
@@ -233,6 +337,24 @@ public class MainActivity extends AppCompatActivity {
         buttonPlay.setEnabled(false);
         buttonPause.setEnabled(true);
 
+        // Play start sound for the current mode immediately (no general delay).
+        // If we pre-played the break-start sound during the prior work session, consume the flag and skip double-play.
+        if (isWorkMode) {
+            // Starting a work session: play work_start and reset the pre-play flag so it may trigger again later
+            playEventSound("work_start");
+            breakStartPrePlayed = false; // ensure pre-play will be available during this work session
+        } else {
+            // Starting a break session: if break_start was already pre-played during the previous work session, consume it and do not replay.
+            if (breakStartPrePlayed) {
+                breakStartPrePlayed = false; // consumed; do not play again
+            } else {
+                playEventSound("break_start");
+            }
+        }
+
+        // Reset break pre-end flag when a new session starts
+        breakPreEndPlayed = false;
+
         long sessionTotal = isWorkMode ? workMillis : breakMillis;
 
         // keep last progress to animate smoothly
@@ -243,6 +365,28 @@ public class MainActivity extends AppCompatActivity {
             public void onTick(long millisUntilFinished) {
                 timeLeft = millisUntilFinished;
                 updateTimerText();
+
+                // If we're in a work session, pre-play the break_start sound 1.5 seconds before the work session ends (once)
+                if (isWorkMode && !breakStartPrePlayed && millisUntilFinished <= 1500) {
+                    try {
+                        playEventSound("break_start");
+                        breakStartPrePlayed = true;
+                    } catch (Exception e) {
+                        android.util.Log.w("MainActivity", "Error pre-playing break_start", e);
+                    }
+                }
+
+                // If we're in a break session, play the break_end sound when 2 seconds remain (once)
+                if (!isWorkMode && !breakPreEndPlayed && millisUntilFinished <= 2000) {
+                    try {
+                        // play immediately (2 seconds before end)
+                        playEventSound("break_end");
+                        breakPreEndPlayed = true;
+                    } catch (Exception e) {
+                        android.util.Log.w("MainActivity", "Error playing break_end pre-sound", e);
+                    }
+                }
+
                 float fraction = (float) (sessionTotal - timeLeft) / (float) sessionTotal;
                 int newProgress = Math.max(0, Math.min(100, Math.round(fraction * 100)));
                 // animate progress from lastProgress to newProgress
@@ -254,6 +398,9 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFinish() {
+                // When a session finishes we switch modes and auto-start the next session.
+                // The next session's start sound is played by startTimer() when it begins.
+
                 timeLeft = 0;
                 updateTimerText();
                 ObjectAnimator.ofInt(circularProgress, "progress", 100).setDuration(200).start();
@@ -273,7 +420,7 @@ public class MainActivity extends AppCompatActivity {
                 timeLeft = isWorkMode ? workMillis : breakMillis;
                 isRunning = false;
                 updateUi();
-                // auto-start next
+                // auto-start next (startTimer will play the start sound immediately)
                 startTimer();
             }
         };
@@ -294,6 +441,13 @@ public class MainActivity extends AppCompatActivity {
             countDownTimer.cancel();
             countDownTimer = null;
         }
+        // Cancel any pending sound callbacks
+        if (mainHandler != null && pendingSoundRunnable != null) {
+            mainHandler.removeCallbacks(pendingSoundRunnable);
+            pendingSoundRunnable = null;
+        }
+        // reset break pre-end flag
+        breakPreEndPlayed = false;
         updateUi();
     }
 
@@ -355,6 +509,9 @@ public class MainActivity extends AppCompatActivity {
             countDownTimer.cancel();
             countDownTimer = null;
         }
+        // Reset sessions to 1 whenever user leaves the app
+        sessionsCompleted = 1;
+        savePreferences();
     }
 
     @Override
@@ -364,5 +521,11 @@ public class MainActivity extends AppCompatActivity {
             countDownTimer.cancel();
             countDownTimer = null;
         }
+        // Cancel pending sound callbacks and release player
+        if (mainHandler != null && pendingSoundRunnable != null) {
+            mainHandler.removeCallbacks(pendingSoundRunnable);
+            pendingSoundRunnable = null;
+        }
+        stopAndReleaseMediaPlayer();
     }
 }
