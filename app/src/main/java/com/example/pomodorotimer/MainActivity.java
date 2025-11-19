@@ -4,7 +4,6 @@ import android.animation.ObjectAnimator;
 import android.app.AlertDialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.media.Ringtone;
@@ -16,13 +15,18 @@ import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Vibrator;
+import android.os.VibrationEffect;
+import android.annotation.SuppressLint;
+
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
@@ -58,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isRunning = false;
     private boolean isWorkMode = true;
 
-    // Flag to make sure we play the break-preend sound only once per break session
+    // Flag to make sure we play the break-pre-end sound only once per break session
     private boolean breakPreEndPlayed = false;
 
     // Flag indicating we already pre-played the break-start sound during the last work session
@@ -93,7 +97,15 @@ public class MainActivity extends AppCompatActivity {
         createNotificationChannel();
         loadPreferences();
 
-        // Back button handler
+        // Back-gesture handler (modern replacement for deprecated onBackPressed())
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                confirmExit();
+            }
+        });
+
+        // Back button handler (UI button)
         if (buttonBack != null) {
             buttonBack.setOnClickListener(v -> confirmExit());
         }
@@ -130,12 +142,7 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    @Override
-    public void onBackPressed() {
-        // Show confirmation dialog before exiting
-        confirmExit();
-    }
-
+    // Restore view binding that was accidentally removed
     private void bindViews() {
         textMode = findViewById(R.id.text_mode);
         textTimer = findViewById(R.id.text_timer);
@@ -147,6 +154,7 @@ public class MainActivity extends AppCompatActivity {
         circularProgress = findViewById(R.id.circular_progress);
     }
 
+    // Restore notification channel creation
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "Pomodoro Alerts";
@@ -166,6 +174,7 @@ public class MainActivity extends AppCompatActivity {
     //   res/raw/break_start.mp3  -> "break_start"
     //   res/raw/break_end.mp3    -> "break_end"
     // If the requested file is not present, falls back to the default notification sound.
+    @SuppressLint("DiscouragedApi")
     private void playEventSound(String rawName) {
         try {
             stopAndReleaseMediaPlayer();
@@ -189,13 +198,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // Play an event sound after a specified delay (milliseconds). Cancels any previously scheduled sound.
+    @SuppressWarnings("unused")
     private void playEventSoundDelayed(String rawName, long delayMs) {
         try {
             if (mainHandler == null) mainHandler = new Handler(Looper.getMainLooper());
             // Cancel previous pending sound if any
             if (pendingSoundRunnable != null) {
                 mainHandler.removeCallbacks(pendingSoundRunnable);
-                pendingSoundRunnable = null;
+                // pendingSoundRunnable = null; // redundant — we'll overwrite below
             }
             pendingSoundRunnable = () -> playEventSound(rawName);
             mainHandler.postDelayed(pendingSoundRunnable, delayMs);
@@ -254,8 +264,8 @@ public class MainActivity extends AppCompatActivity {
             try {
                 Ringtone r = RingtoneManager.getRingtone(this, soundUri);
                 if (r != null) r.play();
-            } catch (Exception ignored) {
-                android.util.Log.w("MainActivity", "Failed to play notification sound", ignored);
+            } catch (Exception e) {
+                android.util.Log.w("MainActivity", "Failed to play notification sound", e);
             }
         } catch (Exception e) {
             android.util.Log.w("MainActivity", "showNotification error", e);
@@ -487,14 +497,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void vibrateOnFinish() {
         try {
-            Vibrator v = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-            if (v != null && v.hasVibrator()) v.vibrate(300);
+            Vibrator v = getSystemService(Vibrator.class);
+            if (v != null && v.hasVibrator()) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    v.vibrate(VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE));
+                } else {
+                    v.vibrate(300);
+                }
+            }
         } catch (SecurityException ignored) {
         }
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(KEY_IS_WORK, isWorkMode);
         outState.putLong(KEY_TIME_LEFT, timeLeft);
